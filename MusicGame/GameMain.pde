@@ -15,7 +15,7 @@ class GameMain extends Scene {
     startTime=millis();
     Game.beginer=Game.jacket[0];
     music=Game.music[n];
-    music.loadDualFile(Game.fileName[n]+Game.ext  ,Game.fileName2[n]+Game.ext  );
+    music.loadDualFile(Game.fileName[n]+Game.ext,Game.fileName2[n]+Game.ext);
     music.loadWave();
     println(Game.difficulty);
     music.setDifficulty(Game.difficulty);
@@ -63,7 +63,7 @@ class GameMain extends Scene {
     line(100, 550, 900, 550);
 
     textSize(85);
-    text("Y    U    I     O    P", 150, 530);
+    text("←   →   ↑    ↓   Ent", 150, 530);
 
     for (int i=0; i<5; i++) {
 
@@ -101,7 +101,7 @@ class GameMain extends Scene {
       SceneManager.changeScene("MusicSelect");
     }
     for (int i=0; i<5; i++) {
-      if (keyCode==Game.keys[i]) {
+      if (key==Game.keys[i]) {
         Game.pressed[i]=true;
         Game.keyState[i]=true;
       }
@@ -110,7 +110,7 @@ class GameMain extends Scene {
 
   void keyReleased() {
     for (int i=0; i<5; i++) {
-      if (keyCode==Game.keys[i]) {
+      if (key==Game.keys[i]) {
         Game.released[i]=true;
         Game.keyState[i]=false;
         Game.resetRecent(i);

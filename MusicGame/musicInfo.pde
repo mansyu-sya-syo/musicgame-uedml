@@ -57,23 +57,23 @@ class MusicInfo extends Scene {
   }
 
   void keyPressed() {
-    if (keyCode==LEFT&&select>=1) {
+    if (key=='c'&&select>=1) {
       select=0;
       Game.song1.play(0);
     }
-    if (keyCode==RIGHT&&select==0) {
+    if (key=='v'&&select==0) {
       select=1;
       Game.song1.play(0);
     }
-    if (keyCode==UP&&select==1) {
+    if (key=='b'&&select==1) {
       select=2;
       Game.song1.play(0);
     }
-    if (keyCode==DOWN&&select==2) {
+    if (key=='n'&&select==2) {
       select=1;
       Game.song1.play(0);
     }
-    if (keyCode==ENTER) {
+    if (key=='m') {
       if (select==0) {
         SceneManager.changeScene("MusicSelect"); //楽曲選択に戻る
         Game.song3.play(0);

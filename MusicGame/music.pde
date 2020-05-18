@@ -219,7 +219,7 @@ class Music {
     String    lineData1[] = null;
     String    lineData2[] = null;
     
-    if(filename2==Game.ext) loadFile(filename); 
+    if(filename2=="") loadFile(filename); 
     
     //テキストファイルを読む(http://mslabo.sakura.ne.jp/WordPress/make/processing%E3%80%80%E9%80%86%E5%BC%95%E3%81%8D%E3%83%AA%E3%83%95%E3%82%A1%E3%83%AC%E3%83%B3%E3%82%B9/%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%8B%E3%82%89%E6%96%87%E5%AD%97%E5%88%97%E3%83%87%E3%83%BC%E3%82%BF%E3%82%92%E8%AA%AD%E3%81%BF%E8%BE%BC%E3%82%80%E3%81%AB%E3%81%AF/)
     lineData1 = loadStrings( filename );
