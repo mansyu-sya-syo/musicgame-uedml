@@ -3,12 +3,13 @@ class Title extends Scene {
   void setup() {
     background(200);
     for (int i=0; i<10; i++) Game.jacket[i]=loadImage("jacket/"+Game.jacketName[i]);
+    for (int i=0; i<8; i++) Game.fileName[i]+=Game.ext;
+    for (int i=0; i<8; i++) Game.fileName2[i]+=Game.ext;
     Game.song1=Game.minim.loadFile("beep/decision3.mp3");
     Game.song2=Game.minim.loadFile("beep/decision23.mp3");
     Game.song3=Game.minim.loadFile("beep/cancel2.mp3");
+    Game.song4=Game.minim.loadFile("music/a beginer.wav");
     Game.OPsong=Game.minim.loadFile("music/OP.wav");
-    
-    for(int i=0;i<8;i++) Game.music[i]=new Music();
     
     Game.OPsong.play();
     

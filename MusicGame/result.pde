@@ -1,4 +1,4 @@
-  class ResultScene extends Scene{
+class ResultScene extends Scene{
   
   int n;
   
@@ -20,13 +20,13 @@
     text("good:"+Integer.toString(Game.good), 300, 450);
     text("miss:"+Integer.toString(Game.miss), 300, 500);
     textSize(30);
-    text("press Ent key", 700, 550);
+    text("press Ctrl key", 700, 550);
     textSize(100);
     text(Integer.toString(Game.score), 400, 190);
   }
 
   void keyPressed() {
-    if (key=='m') {
+    if (keyCode==ENTER) {
       SceneManager.changeScene("Title");
       Game.song2.play(0);
     }

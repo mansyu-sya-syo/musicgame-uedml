@@ -8,10 +8,94 @@ import ddf.minim.spi.*;
 import ddf.minim.ugens.*;
 
 
+class ScoreBoard{
+  int score=0;
+  int perfect=0;
+  int good=0;
+  int miss=0;
+  int max_combo=0;
+}
+
+//class SongInfo{
+   
+//}
+
+class BackGrounds{
+  
+  Judge[] recent=new Judge[5];
+  ScoreBoard scoreBoard;
+  
+  BackGrounds(ScoreBoard scoreBoard){
+    this.scoreBoard=scoreBoard;
+  }
+  
+  void Judge(int lane,Judge judge) {
+    recent[lane]=judge;
+    for (int i=0; i<LANE_NUM; i++) {
+      if (judge==Judge.PERFECT) {
+        println("perfect");
+        scoreBoard.perfect++;
+      } else if (judge==Judge.GOOD) {
+        println("good");
+        scoreBoard.good++;
+      } else if (judge==Judge.LOST) {
+        println("miss");
+        scoreBoard.miss++;
+      }
+    }
+  }
+
+  private void setColorByJudge(Judge judge) {
+    switch(judge) {
+    case PERFECT:
+      
+      break;
+    case GOOD:
+      fill(0, 255, 0, 100);
+      break;
+    default:
+      fill(255, 255, 255, 100);
+    }
+  }
+
+  void draw() {
+    background(100, 100, 100);
+    tint(255, 255, 255, 100);
+    image(Game.beginer, 100, 60, 800, 500);
+    stroke(200);
+    strokeWeight(5);
+    fill(255);
+    for (int i=0; i<=5; i++) {
+      line(100+160*i, 0, 100+160*i, 550);
+    }
+    line(100, 550, 900, 550);
+
+    textSize(85);
+    text("Y    U    I     O    P", 150, 530);
+
+    for (int i=0; i<5; i++) {
+
+      if (Game.keyState[i]) {
+        noStroke();
+        setColorByJudge(recent[i]);
+        rect(laneX[i], 400, 160, 150);
+      }
+    } 
+    fill(255);
+    textSize(25);
+    text("SCORE:"+calcScore(), 30, 60);
+  }
+
+  int calcScore() {
+    int aaa=music.getAllNotes();
+    Game.score=(int)((double)(Game.perfect*2+Game.good)/2.0/(double)music.getAllNotes()*10000.0);
+    return Game.score;
+  }
+  
+}
 
 
-
-
+//不変オブジェクトにしたほうが上手い・・・？
 class Note {
   private NoteType type; //ノーツの種類
   static final double UNDEFINED=100000000;
@@ -46,7 +130,6 @@ class Note {
   boolean checkLost() {
     if (diff(pos)<-LOST_TIME && status==Status.DEFAULT) {
       status=Status.VANISHED;
-      Game.recent[lane]=Game.judge[lane]=Judge.LOST;
       return true;
     }
 
@@ -54,11 +137,11 @@ class Note {
   }
 
   //判定（共通部分)
-  void judge(double diff) {
+  Judge judge(double diff) {
     if (diff<PERFECT_TIME) {
-      Game.recent[lane]=Game.judge[lane]=Judge.PERFECT;
+      return Judge.PERFECT;
     } else {
-      Game.recent[lane]=Game.judge[lane]=Judge.GOOD;
+      return Judge.GOOD;
     }
   }
 
@@ -118,7 +201,7 @@ class Note {
   }
 }
 
-class Music {
+class Music{
   String title;
   String subTitle;
   double BPM;
@@ -126,54 +209,42 @@ class Music {
   double offset;
   double demoStart; 
   double endtime;
-  private int[] allNotes={0,0};
+  private int[] allNotes={0, 0};
   private int d; //難易度(0:EASY,1:HARD)
   //private ArrayList<Pair<Double,Double>> scrollChange; //変更時の秒数、変更後の速度
   AudioPlayer wave;
-  
+  BackGrounds backGrounds;
+
   Judge judge;
 
   int[] level=new int[DIFFICULTY_NUM];
   private ArrayList<Note>[][] lanes=new ArrayList[2][5];
   private int noteCnt[]={0, 0, 0, 0, 0};
 
-  Music() {
-    for (int k=0; k<DIFFICULTY_NUM; k++) {
-      for (int i=0; i<LANE_NUM; i++) {
-        lanes[k][i]=new ArrayList<Note>();
-      }
-    }
-  }
-
   void setDifficulty(Difficulty d) {
     this.d=d.ordinal();
     println(noteCnt.length);
-    for (int i=0;i<LANE_NUM;i++) noteCnt[i]=0;
-    
+    for (int i=0; i<LANE_NUM; i++) noteCnt[i]=0;
   }
 
-  void judge() {
-
-    //ノーツロスト判定
+  //ノーツロスト判定
+  void checkLost() {
     for (int i=0; i<LANE_NUM; i++) {
       if (noteCnt[i]>=lanes[d][i].size()) continue; //すでにレーンの全ノーツが消えているならば飛ばす
-      Note note=lanes[d][i].get(noteCnt[i]);
-      if (note.checkLost() ) {
-        noteCnt[i]++;
+      Note note=lanes[d][i].get(noteCnt[i]); //一番手前のノーツ
+      if (note.checkLost() ){
+        backGrounds.Judge(i,Judge.LOST); //BackGroundsにロストしたことを通知
+        noteCnt[i]++; //ロストしてたらカウント一個あげる
       }
     }
+  }
 
-    //ノーツ押せたか判定
-    for (int i=0; i<LANE_NUM; i++) {
-      if (noteCnt[i]>=lanes[d][i].size()) continue; //すでにレーンの全ノーツが消えているならば飛ばす
-      Note note=lanes[d][i].get(noteCnt[i]);
-      if (Game.pressed[i]) {
-        if (note.judgePress()) noteCnt[i]++;
-      }
-      if (Game.released[i]) {
-        if (note.judgeRelease()) noteCnt[i]++;
-      }
-    }
+  //ノーツを押せたか判定を行う(引数：レーンNo.0~4)
+  void judge(int lane) {
+    if (noteCnt[lane]>=lanes[d][lane].size()) return; //すでにレーンの全ノーツが消えているならば飛ばす
+    Note note=lanes[d][lane].get(noteCnt[lane]);
+    if (note.judgePress()) noteCnt[lane]++;
+    if (note.judgeRelease()) noteCnt[lane]++;
   }
 
   void draw() {
@@ -184,67 +255,6 @@ class Music {
         note.draw();
       }
     }
-  }
-
-
-
-  //譜面の読み込み
-  //input: 譜面データのファイル名
-
-  void loadFile(String filename) {
-
-    String    lineData[] = null;
-
-    //テキストファイルを読む(http://mslabo.sakura.ne.jp/WordPress/make/processing%E3%80%80%E9%80%86%E5%BC%95%E3%81%8D%E3%83%AA%E3%83%95%E3%82%A1%E3%83%AC%E3%83%B3%E3%82%B9/%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%8B%E3%82%89%E6%96%87%E5%AD%97%E5%88%97%E3%83%87%E3%83%BC%E3%82%BF%E3%82%92%E8%AA%AD%E3%81%BF%E8%BE%BC%E3%82%80%E3%81%AB%E3%81%AF/)
-    lineData = loadStrings( filename );
-    if ( lineData == null ) {
-      //読み込み失敗
-      println( filename + " 読み込み失敗" );
-      System.exit(1);
-    }
-    //読み込んだ各行を画面に表示
-    for ( int i = 0; i < lineData.length; i++ ) {
-      println( String.valueOf(i) + "：[" + lineData[i] + "]" );
-    }
-
-    convertToArray(lineData);
-    //println(music.lanes.data);
-  }
-  
-    //譜面の読み込み
-  //input: 譜面データのファイル名
-
-  void loadDualFile(String filename,String filename2) {
-
-    String    lineData1[] = null;
-    String    lineData2[] = null;
-    
-    if(filename2=="") loadFile(filename); 
-    
-    //テキストファイルを読む(http://mslabo.sakura.ne.jp/WordPress/make/processing%E3%80%80%E9%80%86%E5%BC%95%E3%81%8D%E3%83%AA%E3%83%95%E3%82%A1%E3%83%AC%E3%83%B3%E3%82%B9/%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%81%8B%E3%82%89%E6%96%87%E5%AD%97%E5%88%97%E3%83%87%E3%83%BC%E3%82%BF%E3%82%92%E8%AA%AD%E3%81%BF%E8%BE%BC%E3%82%80%E3%81%AB%E3%81%AF/)
-    lineData1 = loadStrings( filename );
-    lineData2 = loadStrings( filename2 );
-    if ( lineData1 == null ) {
-      //読み込み失敗
-      println( filename + " 読み込み失敗" );
-      System.exit(1);
-    }
-    if ( lineData2 == null ) {
-      //読み込み失敗
-      println( filename2 + " 読み込み失敗" );
-      System.exit(1);
-    }
-    String lineData[]=new String[lineData1.length+lineData2.length];
-    System.arraycopy(lineData1, 0, lineData, 0, lineData1.length);
-    System.arraycopy(lineData2, 0, lineData, lineData1.length, lineData2.length);
-    
-    //読み込んだ各行を画面に表示
-    for ( int i = 0; i < lineData.length; i++ ) {
-      println( String.valueOf(i) + "：[" + lineData[i] + "]" );
-    }
-
-    convertToArray(lineData);
-    //println(music.lanes.data);
   }
 
   //分数を小数に変換
@@ -266,20 +276,28 @@ class Music {
     return Double.parseDouble(numerator)/Double.parseDouble(denominator);
   }
 
-  double getEndTime(){
+  double getEndTime() {
     return endtime;
   }
-   
+
   /*文字列を音ゲー用形式に変換
    input: 譜面データを表す文字列配列
    */
-  private void convertToArray(String[] lines) {
+  Music(String[] lines)  throws ScoreFileSyntaxErrorException{
     
+    scoreBoard=new ScoreBoard();
+
+    for (int k=0; k<DIFFICULTY_NUM; k++) {
+      for (int i=0; i<LANE_NUM; i++) {
+        lanes[k][i]=new ArrayList<Note>();
+      }
+    }
+
     double BPM=120;
     double beats=4;
     double unit=4;
     double time=0;
-    for (int i=0;i<2;i++) allNotes[i]=0;
+    for (int i=0; i<2; i++) allNotes[i]=0;
     int d=1; //現在入力中の難易度(デフォルトはHARD)
     //int i=0, j=0;
 
@@ -288,16 +306,20 @@ class Music {
     //0:ノーツ入力中　1:コマンド入力中(コマンド名) 2:コマンド入力中（引数) 3:通常状態
     int status=-1; 
     for (int i=0; i<lines.length; i++) {
-      String commandName="";
-      String argument="";
-      int notenum=0;
+      String commandName=""; //コマンド(ヘッダ)名
+      String argument=""; //その引数
+      int notenum=0; //その行でカウントされた数字の数(行の終端の判定に使う)
       if (lines[i].length()==0) continue; //空行は飛ばす
       if (status==0) status=3;
       //println();
+      
+      //☆一文字ずつ処理
       for (int j=0; j<lines[i].length(); j++) {
+        
         char current=lines[i].charAt(j);
         int num=current - '0';
 
+        //コメント
         if (current=='/') {
           if (j+1!=lines[i].length()) {
             if (lines[i].charAt(j+1)=='/') {
@@ -307,6 +329,8 @@ class Music {
           }
         }
 
+
+        //コマンド
         if (status==-2) {
           argument+=current;
         } else if (status==-1) {
@@ -318,36 +342,33 @@ class Music {
           }
         }
 
-
+        //ノーツ
         int size=lanes[d][notenum].size();//そのレーンの総ノーツ数
         if (status==0 || status==3) {
           status=0;
           //通常状態
           if (current=='#') {
-            //if (notenum!=0) println("");
+            //コマンド入力へ移行
             commandName="#";
             status=1;
           } else if (num==1) {
+            //通常ノーツ
             lanes[d][notenum].add(new Note(NoteType.NORMAL, time, notenum));
             //println(Integer.toString(i)+" "+"NORMAL");
             notenum++;
             allNotes[d]++;
           } else if (num==2) {
-            if (size==0) {
+            //ロングノーツ
+            Note before; //一個前のノーツ
+            //2000003と22222223をどちらも許容するための処理。
+            if (size==0 || (before=lanes[d][notenum].get(size-1)).getEndPos()!=Note.UNDEFINED || before.getType()==NoteType.NORMAL) {
               lanes[d][notenum].add(new Note(NoteType.LONG, time, notenum));
               allNotes[d]++;
-              //println(Integer.toString(i)+" "+"LONG");
-            } else {
-              Note before=lanes[d][notenum].get(size-1); //一個前のノーツ
-              if (before.getEndPos()!=Note.UNDEFINED || before.getType()==NoteType.NORMAL) {
-                lanes[d][notenum].add(new Note(NoteType.LONG, time, notenum));
-                allNotes[d]++;
-                //println(Integer.toString(i)+" "+"LONG");
-              }
             }
             notenum++;
           } else if (num==3) {
-
+            //ロングノーツの終端
+            if(size==0) throw new ScoreFileSyntaxErrorException("ロングノーツの終点に対応する始点がありません。");
             Note before=lanes[d][notenum].get(size-1); //一個前のノーツ
             before.setEndPos(time);
             notenum++;
@@ -402,7 +423,7 @@ class Music {
           demoStart=Double.parseDouble(argument);
           break;
         default:
-          println("上記のヘッダは存在しません。");
+          throw new ScoreFileSyntaxErrorException("このヘッダは存在しません。");
         }
         commandName="";
         argument="";
@@ -422,17 +443,18 @@ class Music {
           break;
         case "#UNIT":
           unit=Double.parseDouble(argument);
+
           break;
         case "#MEASURE":
           beats=frac(argument);
           break;
         default:
-          println("上記の#コマンドは存在しません。");
+          throw new ScoreFileSyntaxErrorException("この#コマンドは存在しません。");
         }
         commandName="";
         argument="";
       } else if (status==0 || status==3) {
-        //println("OK: i="+String.valueOf(i)+" time="+String.valueOf(time));
+        println("OK: i="+String.valueOf(i)+" line="+lines[i]);
         //println("OK: difficulty="+String.valueOf(d));
         double bpn=4.0/unit; //1ノーツ当たりの拍数 [beats/notes]
         double bps=BPM/60/1000; //1msec当たりの拍数　[beats/msec]
@@ -442,25 +464,32 @@ class Music {
     }
     endtime=time;
   }
-  
-  int getAllNotes(){
+
+  int getAllNotes() {
     return allNotes[d];
   }
 
   //波形をロード
   void loadWave() {
-    wave=Game.minim.loadFile(filename);
+    wave=Game.minim.loadFile("music/"+filename);
   }
 
   //波形を再生
-  void playMusic() {
+  void playMusic() throws NullPointerException{
     if (wave!=null) wave.play();
-    else println("波形が読み込まれていません！");
+    else throw new NullPointerException("波形が読み込まれていません！最初にloadWave()を呼ぶ必要があります。");
   }
   
   //再生を停止
-  void stopMusic() {
+  void stopMusic() throws NullPointerException{
     if (wave!=null) wave.pause();
-    else println("波形が読み込まれていません！");
+    else throw new NullPointerException("波形が読み込まれていません！最初にloadWave()を呼ぶ必要があります。");
   }
+  
+  class ScoreFileSyntaxErrorException extends Exception {
+    ScoreFileSyntaxErrorException(String msg) {
+      super(msg);
+    }
+  }
+
 }

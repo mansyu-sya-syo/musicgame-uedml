@@ -57,39 +57,42 @@ class MusicInfo extends Scene {
   }
 
   void keyPressed() {
-    if (key=='c'&&select>=1) {
+    if (keyCode==LEFT&&select>=1) {
       select=0;
       Game.song1.play(0);
     }
-    if (key=='v'&&select==0) {
+    if (keyCode==RIGHT&&select==0) {
       select=1;
       Game.song1.play(0);
     }
-    if (key=='b'&&select==1) {
+    if (keyCode==UP&&select==1) {
       select=2;
       Game.song1.play(0);
     }
-    if (key=='n'&&select==2) {
+    if (keyCode==DOWN&&select==2) {
       select=1;
       Game.song1.play(0);
     }
-    if (key=='m') {
+    if (keyCode==ENTER) {
       if (select==0) {
         SceneManager.changeScene("MusicSelect"); //楽曲選択に戻る
         Game.song3.play(0);
       }
-      if (select==1) {
+      if (select==1 || select==2) {
+        try{
+          String[] score=bindTwoFiles(loadStrings("scores/"+Game.fileName[n]),loadStrings("scores/"+Game.fileName2[n]));
+          Music music=new Music(score);
+          //TODO 楽曲の停止処理
+          SceneManager.set("GameMain", new GameMain(music));
+          SceneManager.changeScene("GameMain"); //ゲームメインに移行
+          if(select==1) Game.difficulty=Difficulty.EASY;
+          else Game.difficulty=Difficulty.HARD;
+          Game.song2.play(0);
+          
+        }catch(Exception e){
+          e.printStackTrace();
+        }
 
-        Game.song4.pause();
-        SceneManager.changeScene("GameMain"); //ゲームメインに移行
-        Game.difficulty=Difficulty.EASY;
-        Game.song2.play(0);
-      }
-      if (select==2) {
-        Game.song4.pause();
-        SceneManager.changeScene("GameMain"); //ゲームメインに移行 
-        Game.difficulty=Difficulty.HARD;
-        Game.song2.play(0);
       }
     }
   }

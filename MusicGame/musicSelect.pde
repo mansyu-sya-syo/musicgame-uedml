@@ -36,28 +36,26 @@ class MusicSelect extends Scene {
   }
 
   void keyPressed() {
-    if (key=='c'&&Game.nowSelecting>0) {
+    if (keyCode==LEFT&&Game.nowSelecting>0) {
       Game.nowSelecting--;
       Game.song1.play(0);
     }
-    if (key=='v'&&Game.nowSelecting<7) {
+    if (keyCode==RIGHT&&Game.nowSelecting<7) {
       Game.nowSelecting++;
       Game.song1.play(0);
     }
-    if (key=='b'&&Game.nowSelecting>=4) {
+    if (keyCode==UP&&Game.nowSelecting>=4) {
       Game.nowSelecting=Game.nowSelecting-4;
       Game.song1.play(0);
     }
-    if (key=='n'&&Game.nowSelecting<=3) {
+    if (keyCode==DOWN&&Game.nowSelecting<=3) {
       Game.nowSelecting=Game.nowSelecting+4;
       Game.song1.play(0);
     }
-    if (key=='m') {
+    if (keyCode==ENTER) {
       SceneManager.changeScene("MusicInfo");
       Game.song2.play(0);
-      if (Game.nowSelecting==0) {
-        //Game.song4.play(0);
-      }
+      //TODO 楽曲流す処理
     }
   }
 }

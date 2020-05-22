@@ -39,10 +39,36 @@ enum Difficulty {
 
 //ジャッジ
 enum Judge{
-  PERFECT,
+  PERFECT
+,
   GOOD,
   LOST,
   NA
+}
+
+//各行を画面に表示
+void showText(String[] lineData){
+  for ( int i = 0; i < lineData.length; i++ ) {
+    println( String.valueOf(i) + "：[" + lineData[i] + "]" );
+  }
+}
+
+
+
+//2つのテキストを文字通りくっつける錬金術
+//2つのテキストを順にそのまま繋げる
+
+String[] bindTwoFiles(String[] lineData1, String[] lineData2) {
+  //両方nullならnull
+  if(lineData1==null && lineData2==null) return null;
+  //いずれかがnullならば他方を返す
+  if(lineData1==null) return lineData2;
+  if(lineData2==null) return lineData1;
+  //コピーを駆使して合体させる
+  String lineData[]=new String[lineData1.length+lineData2.length];
+  System.arraycopy(lineData1, 0, lineData, 0, lineData1.length);
+  System.arraycopy(lineData2, 0, lineData, lineData1.length, lineData2.length);
+  return lineData;
 }
 
 
@@ -52,7 +78,7 @@ public void settings() {
   SceneManager.set("Title", new Title());
   SceneManager.set("MusicSelect", new MusicSelect());
   SceneManager.set("MusicInfo", new MusicInfo());
-  SceneManager.set("GameMain", new GameMain());
+  
   SceneManager.set("Result", new ResultScene());
   SceneManager.changeScene("Title");
   Game.minim=new Minim(this);
