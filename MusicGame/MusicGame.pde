@@ -78,8 +78,6 @@ public void settings() {
   SceneManager.set("Title", new Title());
   SceneManager.set("MusicSelect", new MusicSelect());
   SceneManager.set("MusicInfo", new MusicInfo());
-  
-  SceneManager.set("Result", new ResultScene());
   SceneManager.changeScene("Title");
   Game.minim=new Minim(this);
 }

@@ -81,9 +81,8 @@ class MusicInfo extends Scene {
       if (select==1 || select==2) {
         try{
           String[] score=bindTwoFiles(loadStrings("scores/"+Game.fileName[n]),loadStrings("scores/"+Game.fileName2[n]));
-          Music music=new Music(score);
           //TODO 楽曲の停止処理
-          SceneManager.set("GameMain", new GameMain(music));
+          SceneManager.set("GameMain", new Music(score));
           SceneManager.changeScene("GameMain"); //ゲームメインに移行
           if(select==1) Game.difficulty=Difficulty.EASY;
           else Game.difficulty=Difficulty.HARD;

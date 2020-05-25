@@ -43,20 +43,7 @@ static class Game {
   static int calcNoteY(double t1, double t2) {
     return (int)((-t1+t2)/1.5+550);
   }
-
-  //ジャッジをリセット
-  static void resetJudge() {
-    for (int i=0; i<5; i++) {
-      judge[i]=Judge.NA;
-    }
-  }
   
-
-  //ジャッジをリセット
-  static void resetRecent(int i) {
-
-    recent[i]=Judge.NA;
-  }
   //キー入力をリセット
   static void resetKeys() {
     for (int i=0; i<5; i++) {
