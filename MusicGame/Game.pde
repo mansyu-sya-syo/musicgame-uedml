@@ -32,17 +32,18 @@ static class Game {
 
   static PImage beginer;
   static double time;
-
-
   
-
-
   //ノーツのy座標を計算
   //input:t1=ノーツの通過時刻[msec] t2=現在時刻[msec] 
   //output: ノーツのy座標
   static int calcNoteY(double t1, double t2) {
     return (int)((-t1+t2)/1.5+550);
   }
+
+  
+
+
+
   
   //キー入力をリセット
   static void resetKeys() {

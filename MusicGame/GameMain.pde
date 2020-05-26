@@ -1,5 +1,4 @@
 import java.util.ArrayList; //<>//
-import java.util.Objects;
 import javafx.util.Pair;
 import ddf.minim.*;
 import ddf.minim.analysis.*;
@@ -10,11 +9,22 @@ import ddf.minim.ugens.*;
 
 
 class ScoreBoard{
-  int score=0;
   int perfect=0;
   int good=0;
   int miss=0;
   int max_combo=0;
+  
+  int allNotes; //ノーツ数
+  
+  ScoreBoard(int allNotes){
+    this.allNotes=allNotes;
+  }
+  
+  int calcScore() {
+    //int aaa=getAllNotes();
+    int score=(int)((double)(perfect*2+good)/2.0/(double)allNotes*10000.0);
+    return score;
+  }
 }
 
 //class SongInfo{
@@ -30,7 +40,8 @@ class BackGrounds{
     this.scoreBoard=scoreBoard;
   }
   
-  void Judge(int lane,Judge judge) {
+  boolean judge(int lane,Judge judge) {
+    if(judge==null) return false;
     recent[lane]=judge;
     for (int i=0; i<LANE_NUM; i++) {
       if (judge==Judge.PERFECT) {
@@ -44,6 +55,7 @@ class BackGrounds{
         scoreBoard.miss++;
       }
     }
+    return true;
   }
 
   private void setColorByJudge(Judge judge) {
@@ -84,7 +96,7 @@ class BackGrounds{
     } 
     fill(255);
     textSize(25);
-    text("SCORE:"+scoreBoard.score, 30, 60);
+    text("SCORE:"+scoreBoard.calcScore(), 30, 60);
   }
   
 }
@@ -202,11 +214,11 @@ class Music extends Scene{
   void setup() {
     startTime=millis();
     Game.beginer=Game.jacket[0];
-    scoreBoard=new ScoreBoard();
-    backGrounds=new BackGrounds(scoreBoard);
-    loadWave();
     println(Game.difficulty);
     setDifficulty(Game.difficulty);
+    scoreBoard=new ScoreBoard(getAllNotes());
+    backGrounds=new BackGrounds(scoreBoard);
+    loadWave();
     playMusic();
   }
 
@@ -230,7 +242,7 @@ class Music extends Scene{
     }
     for (int i=0; i<5; i++) {
       if (key==Game.keys[i]) {
-        println(i);
+        //println(i);
         judge(i);
         Game.keyState[i]=true;
       }
@@ -277,43 +289,20 @@ class Music extends Scene{
       if (noteCnt[i]>=lanes[d][i].size()) continue; //すでにレーンの全ノーツが消えているならば飛ばす
       Note note=lanes[d][i].get(noteCnt[i]); //一番手前のノーツ
       if (note.checkLost() ){
-        backGrounds.Judge(i,Judge.LOST); //BackGroundsにロストしたことを通知
+        backGrounds.judge(i,Judge.LOST); //BackGroundsにロストしたことを通知
         noteCnt[i]++; //ロストしてたらカウント一個あげる
       }
     }
   }
 
-  int calcScore() {
-    //int aaa=getAllNotes();
-    int score=(int)((double)(scoreBoard.perfect*2+scoreBoard.good)/2.0/(double)getAllNotes()*10000.0);
-    return score;
-  }
 
-  boolean gain(Judge judge){
-    if(Objects.isNull(judge)) return false;
-    switch(judge){
-      case PERFECT:
-        scoreBoard.perfect++;
-        break;
-      case GOOD:
-        scoreBoard.good++;
-        break;
-      case LOST:
-        scoreBoard.miss++;
-        break;
-      default:
-        break;
-    }
-    scoreBoard.score=calcScore();
-    return true;
-  }
   
   //ノーツを押せたか判定を行う(引数：レーンNo.0~4)
   void judge(int lane) {
     if (noteCnt[lane]>=lanes[d][lane].size()) return; //すでにレーンの全ノーツが消えているならば飛ばす
     Note note=lanes[d][lane].get(noteCnt[lane]);
-    if (Objects.nonNull(note.judgePress())) noteCnt[lane]++;
-    if (Objects.nonNull(note.judgeRelease())) noteCnt[lane]++;
+    if (backGrounds.judge(lane,note.judgePress())) noteCnt[lane]++;
+    if (backGrounds.judge(lane,note.judgeRelease())) noteCnt[lane]++;
   }
   
 
@@ -357,7 +346,6 @@ class Music extends Scene{
    */
   Music(String[] lines)  throws ScoreFileSyntaxErrorException{
     
-    scoreBoard=new ScoreBoard();
 
     for (int k=0; k<DIFFICULTY_NUM; k++) {
       for (int i=0; i<LANE_NUM; i++) {

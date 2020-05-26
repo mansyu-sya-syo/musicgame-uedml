@@ -22,7 +22,7 @@ class ResultScene extends Scene{
     textSize(30);
     text("press Enter key", 700, 550);
     textSize(100);
-    text(Integer.toString(scoreBoard.score), 400, 190);
+    text(Integer.toString(scoreBoard.calcScore()), 400, 190);
   }
 
   void keyPressed() {
