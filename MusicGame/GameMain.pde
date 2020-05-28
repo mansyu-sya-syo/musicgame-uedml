@@ -1,4 +1,4 @@
-import java.util.ArrayList; //<>//
+import java.util.ArrayList; //<>// //<>// //<>//
 import javafx.util.Pair;
 import ddf.minim.*;
 import ddf.minim.analysis.*;
@@ -8,18 +8,18 @@ import ddf.minim.spi.*;
 import ddf.minim.ugens.*;
 
 
-class ScoreBoard{
+class ScoreBoard {
   int perfect=0;
   int good=0;
   int miss=0;
   int max_combo=0;
-  
+
   int allNotes; //ノーツ数
-  
-  ScoreBoard(int allNotes){
+
+  ScoreBoard(int allNotes) {
     this.allNotes=allNotes;
   }
-  
+
   int calcScore() {
     //int aaa=getAllNotes();
     int score=(int)((double)(perfect*2+good)/2.0/(double)allNotes*10000.0);
@@ -28,32 +28,31 @@ class ScoreBoard{
 }
 
 //class SongInfo{
-   
+
 //}
 
-class BackGrounds{
-  
+class BackGrounds {
+
   Judge[] recent=new Judge[5];
   ScoreBoard scoreBoard;
-  
-  BackGrounds(ScoreBoard scoreBoard){
+
+  BackGrounds(ScoreBoard scoreBoard) {
     this.scoreBoard=scoreBoard;
+    for (int i=0; i<LANE_NUM; i++) recent[i]=Judge.NA;
   }
-  
-  boolean judge(int lane,Judge judge) {
-    if(judge==null) return false;
+
+  boolean judge(int lane, Judge judge) {
+    if (judge==null) return false;
     recent[lane]=judge;
-    for (int i=0; i<LANE_NUM; i++) {
-      if (judge==Judge.PERFECT) {
-        println("perfect");
-        scoreBoard.perfect++;
-      } else if (judge==Judge.GOOD) {
-        println("good");
-        scoreBoard.good++;
-      } else if (judge==Judge.LOST) {
-        println("miss");
-        scoreBoard.miss++;
-      }
+    if (judge==Judge.PERFECT) {
+      EffectManager.add(new StringMsg("perfect", (laneX[lane]+laneX[lane+1])/2, Game.laneY-30));
+      scoreBoard.perfect++;
+    } else if (judge==Judge.GOOD) {
+      EffectManager.add(new StringMsg("good", (laneX[lane]+laneX[lane+1])/2, Game.laneY-30));
+      scoreBoard.good++;
+    } else if (judge==Judge.LOST) {
+      EffectManager.add(new StringMsg("lost", (laneX[lane]+laneX[lane+1])/2, Game.laneY-30));
+      scoreBoard.miss++;
     }
     return true;
   }
@@ -61,13 +60,20 @@ class BackGrounds{
   private void setColorByJudge(Judge judge) {
     switch(judge) {
     case PERFECT:
-      fill(255,255,0,100);
+      fill(255, 255, 0, 100);
       break;
     case GOOD:
       fill(0, 255, 0, 100);
       break;
     default:
       fill(255, 255, 255, 100);
+    }
+  }
+
+  void textByKeys() {
+    textAlign(CENTER);
+    for (int i=0; i<LANE_NUM; i++) {
+      text(Character.toUpperCase(Game.showKeys[i]), (laneX[i]+laneX[i+1])/2.0, 530);
     }
   }
 
@@ -81,67 +87,63 @@ class BackGrounds{
     for (int i=0; i<=5; i++) {
       line(100+160*i, 0, 100+160*i, 550);
     }
-    line(100, 550, 900, 550);
+    line(100, Game.laneY, 900, Game.laneY);
 
     textSize(85);
-    text("Y    U    I     O    P", 150, 530);
+    textByKeys();
 
     for (int i=0; i<5; i++) {
 
       if (Game.keyState[i]) {
         noStroke();
-        //setColorByJudge(recent[i]);
+        setColorByJudge(recent[i]);
         rect(laneX[i], 400, 160, 150);
       }
     } 
     fill(255);
     textSize(25);
+    textAlign(LEFT);
     text("SCORE:"+scoreBoard.calcScore(), 30, 60);
   }
-  
 }
 
 
-//不変オブジェクトにしたほうが上手い・・・？
+//ノーツ
 class Note {
-  private NoteType type; //ノーツの種類
+  private NoteType type=NoteType.NORMAL; //ノーツの種類
   static final double UNDEFINED=100000000;
-  private double pos=UNDEFINED; //位置[sec]
-  private double endpos=UNDEFINED; //終端位置[sec](ロングのみ)
-  private int lane; //所属レーン番号(左から0,1,2,3,4）
-  private Status status=Status.DEFAULT;
+  protected double pos=UNDEFINED; //位置[sec]
+  protected int lane; //所属レーン番号(左から0,1,2,3,4）
+  protected Status status=Status.DEFAULT;
 
-  Note(NoteType type, double pos, int lane) {
-    this.type=type;
+
+  Note(double pos, int lane) {
     this.pos=pos;
     this.lane=lane;
   }
 
-
-
   //ノーツ描画
-  void draw() {
+  void draw(double time) {
     noStroke();
     fill(255, 170, 170);
-    if (type==NoteType.NORMAL) rect(laneX[lane], Game.calcNoteY(pos, Game.time), 160, 10);
-    else if (type==NoteType.LONG) rect(laneX[lane], Game.calcNoteY(endpos, Game.time), 160, (Game.calcNoteY(pos, Game.time)-Game.calcNoteY(endpos, Game.time)));
-  }
-
-  //既定の時刻と現在の時刻の差を求める(正ならば現在時刻のほうが早い)
-  double diff(double t1) {
-    return t1-Game.time;
-  }
-
+    rect(laneX[lane], Game.calcNoteY(pos, time), 160, 10);
+  }  
 
   //ロストチェック
-  boolean checkLost() {
-    if (diff(pos)<-LOST_TIME && status==Status.DEFAULT) {
+  boolean checkLost(double time) {
+    if (diff(pos,time)<-LOST_TIME && status==Status.DEFAULT) {
       status=Status.VANISHED;
       return true;
     }
 
     return false;
   }
+
+  //既定の時刻と現在の時刻の差を求める(正ならば現在時刻のほうが早い)
+  double diff(double t1,double t2) {
+    return t1-t2-Game.OFFSET;
+  }
+
   //判定（共通部分)
   Judge judge(double diff) {
     if (diff<PERFECT_TIME) {
@@ -151,23 +153,9 @@ class Note {
     }
   }
 
-  //判定(離す)
-  Judge judgeRelease() {
-    if (type==NoteType.NORMAL) return null;
-    double diff=diff(endpos);
-    diff=abs((float)diff)/2;
-    if (status==Status.PRESSED) {
-      status=Status.VANISHED;
-      if(diff>=LOST_TIME) return Judge.LOST;
-      else return Judge.PERFECT;
-    }
-    return null;
-  }
-
   //判定(押す)
-  Judge judgePress() {
-    double diff=diff(pos);
-    if (type==NoteType.LONG && status==Status.PRESSED) diff=diff(endpos);
+  Judge judgePress(double time) {
+    double diff=diff(pos,time);
 
     diff=abs((float)diff);
     if (diff>=LOST_TIME) return null; 
@@ -195,70 +183,68 @@ class Note {
     this.pos=pos;
   }
 
+  //こうしないとコンパイル通らないから煮え切らない実装になってるの・・・
+  //あたしってほんとバカ・・・
   double getEndPos() {
-    return endpos;
+    return UNDEFINED;
   }
-
   void setEndPos(double endpos) {
-    this.endpos=endpos;
+  }
+  void addCheckPoint(double pos) {
   }
 }
 
-class Music extends Scene{
+class LongNote extends Note {
+
+  private double endpos=UNDEFINED; //終端位置[sec](ロングのみ)
+  private ArrayList<Double> checkPoint; //チェックポイント(ロングノーツにおける中間判定)
+  private int checked=0; //チェックポイント通過数
+
+  LongNote(double pos, int lane) {
+    super(pos, lane);
+    super.type=NoteType.LONG;
+  }
+
+  //ノーツ描画
+  @Override
+    void draw(double time) {
+    noStroke();
+    fill(255, 170, 170);
+    rect(laneX[lane], Game.calcNoteY(endpos, time), 160, (Game.calcNoteY(pos, time)-Game.calcNoteY(endpos, time)));
+  }
+
+  //ノーツロスト判定(ロングノーツはロストしない)
+  @Override
+    boolean checkLost(double time) {
+    return false;
+  }
+
+  //チェックポイントの追加
+  @Override
+  void addCheckPoint(double pos) {
+    checkPoint.add(pos);
+  }
+
+  @Override
+    double getEndPos() {
+    return endpos;
+  }
+
+  @Override
+    void setEndPos(double endpos) {
+    this.endpos=endpos;
+  }
   
+  //@Override
+  //boolean checkPoint(){}
+}
+
+
+class Music extends Scene {
+
   private BackGrounds backGrounds;
   private ScoreBoard scoreBoard;
-  
-  private double startTime;
 
-  void setup() {
-    startTime=millis();
-    Game.beginer=Game.jacket[0];
-    println(Game.difficulty);
-    setDifficulty(Game.difficulty);
-    scoreBoard=new ScoreBoard(getAllNotes());
-    backGrounds=new BackGrounds(scoreBoard);
-    loadWave();
-    playMusic();
-  }
-
-
-
-  void draw() {
-    Game.time=millis()-startTime;
-    if (Game.time>getEndTime()){
-      SceneManager.set("Result", new ResultScene(scoreBoard));
-      SceneManager.changeScene("Result");
-    }
-    backGrounds.draw();
-    Game.resetKeys();
-    drawNotes();
-  }
-
-  void keyPressed() {
-    if(keyCode==CONTROL){
-      stopMusic();
-      SceneManager.changeScene("MusicSelect");
-    }
-    for (int i=0; i<5; i++) {
-      if (key==Game.keys[i]) {
-        //println(i);
-        judge(i);
-        Game.keyState[i]=true;
-      }
-    }
-  }
-
-  void keyReleased() {
-    for (int i=0; i<5; i++) {
-      if (key==Game.keys[i]) {
-        Game.keyState[i]=false;
-        //Game.resetRecent(i);
-      }
-    }
-  } 
-  
-  
   String title;
   String subTitle;
   double BPM;
@@ -277,9 +263,61 @@ class Music extends Scene{
   private ArrayList<Note>[][] lanes=new ArrayList[2][5];
   private int noteCnt[]={0, 0, 0, 0, 0};
 
+  private double startTime;
+  private double time;
+
+
+  void setup() {
+    startTime=millis();
+    Game.beginer=Game.jacket[0];
+    scoreBoard=new ScoreBoard(getAllNotes());
+    backGrounds=new BackGrounds(scoreBoard);
+    loadWave();
+    playMusic();
+  }
+
+
+
+  void draw() {
+    time=millis()-startTime;
+    if (time>getEndTime()) {
+      SceneManager.set("Result", new ResultScene(scoreBoard));
+      SceneManager.changeScene("Result");
+    }
+    checkLost();
+    backGrounds.draw();
+    drawNotes();
+    EffectManager.draw(millis());
+  }
+
+  void keyPressed() {
+    if (keyCode==CONTROL) {
+      stopMusic();
+      SceneManager.changeScene("MusicSelect");
+    }
+    for (int i=0; i<5; i++) {
+      if (key==Game.keys[i]) {
+        //println(i);
+        judge(i);
+        Game.keyState[i]=true;
+      }
+    }
+  }
+
+  void keyReleased() {
+    for (int i=0; i<5; i++) {
+      if (key==Game.keys[i]) {
+        Game.keyState[i]=false;
+        backGrounds.recent[i]=Judge.NA;
+      }
+    }
+  }
+
+
   void setDifficulty(Difficulty d) {
     this.d=d.ordinal();
-    println(noteCnt.length);
+    Game.setSpeed(d);
+    //println(noteCnt.length);
     for (int i=0; i<LANE_NUM; i++) noteCnt[i]=0;
   }
 
@@ -288,32 +326,31 @@ class Music extends Scene{
     for (int i=0; i<LANE_NUM; i++) {
       if (noteCnt[i]>=lanes[d][i].size()) continue; //すでにレーンの全ノーツが消えているならば飛ばす
       Note note=lanes[d][i].get(noteCnt[i]); //一番手前のノーツ
-      if (note.checkLost() ){
-        backGrounds.judge(i,Judge.LOST); //BackGroundsにロストしたことを通知
+      if (note.checkLost(time) ) {
+        backGrounds.judge(i, Judge.LOST); //BackGroundsにロストしたことを通知
         noteCnt[i]++; //ロストしてたらカウント一個あげる
       }
     }
   }
 
 
-  
+
   //ノーツを押せたか判定を行う(引数：レーンNo.0~4)
   void judge(int lane) {
     if (noteCnt[lane]>=lanes[d][lane].size()) return; //すでにレーンの全ノーツが消えているならば飛ばす
     Note note=lanes[d][lane].get(noteCnt[lane]);
-    if (backGrounds.judge(lane,note.judgePress())) noteCnt[lane]++;
-    if (backGrounds.judge(lane,note.judgeRelease())) noteCnt[lane]++;
+    if (backGrounds.judge(lane, note.judgePress(time))) noteCnt[lane]++;
   }
-  
 
-  
+
+
   //ノーツの描画
   void drawNotes() {
     for (int i=0; i<LANE_NUM; i++) {
       for (int j=noteCnt[i]; j<lanes[d][i].size(); j++) {
         Note note=lanes[d][i].get(j);
-        if (Game.calcNoteY(note.getPos(), Game.time)<-100) break;
-        note.draw();
+        if (Game.calcNoteY(note.getPos(), time)<-100) break;
+        note.draw(time);
       }
     }
   }
@@ -344,8 +381,8 @@ class Music extends Scene{
   /*文字列を音ゲー用形式に変換
    input: 譜面データを表す文字列配列
    */
-  Music(String[] lines)  throws ScoreFileSyntaxErrorException{
-    
+  Music(String[] lines)  throws ScoreFileSyntaxErrorException {
+
 
     for (int k=0; k<DIFFICULTY_NUM; k++) {
       for (int i=0; i<LANE_NUM; i++) {
@@ -372,10 +409,10 @@ class Music extends Scene{
       if (lines[i].length()==0) continue; //空行は飛ばす
       if (status==0) status=3;
       //println();
-      
+
       //☆一文字ずつ処理
       for (int j=0; j<lines[i].length(); j++) {
-        
+
         char current=lines[i].charAt(j);
         int num=current - '0';
 
@@ -413,7 +450,7 @@ class Music extends Scene{
             status=1;
           } else if (num==1) {
             //通常ノーツ
-            lanes[d][notenum].add(new Note(NoteType.NORMAL, time, notenum));
+            lanes[d][notenum].add(new Note(time, notenum));
             //println(Integer.toString(i)+" "+"NORMAL");
             notenum++;
             allNotes[d]++;
@@ -422,13 +459,16 @@ class Music extends Scene{
             Note before; //一個前のノーツ
             //2000003と22222223をどちらも許容するための処理。
             if (size==0 || (before=lanes[d][notenum].get(size-1)).getEndPos()!=Note.UNDEFINED || before.getType()==NoteType.NORMAL) {
-              lanes[d][notenum].add(new Note(NoteType.LONG, time, notenum));
+              lanes[d][notenum].add(new LongNote(time, notenum));
+              allNotes[d]++;
+            } else if(size!=0 && before.getEndPos()==Note.UNDEFINED && before.getType()==NoteType.LONG){
+              //before.addCheckPoint(time);
               allNotes[d]++;
             }
             notenum++;
           } else if (num==3) {
             //ロングノーツの終端
-            if(size==0) throw new ScoreFileSyntaxErrorException("ロングノーツの終点に対応する始点がありません。");
+            if (size==0) throw new ScoreFileSyntaxErrorException("ロングノーツの終点に対応する始点がありません。");
             Note before=lanes[d][notenum].get(size-1); //一個前のノーツ
             before.setEndPos(time);
             notenum++;
@@ -535,21 +575,20 @@ class Music extends Scene{
   }
 
   //波形を再生
-  void playMusic() throws NullPointerException{
+  void playMusic() throws NullPointerException {
     if (wave!=null) wave.play();
     else throw new NullPointerException("波形が読み込まれていません！最初にloadWave()を呼ぶ必要があります。");
   }
-  
+
   //再生を停止
-  void stopMusic() throws NullPointerException{
+  void stopMusic() throws NullPointerException {
     if (wave!=null) wave.pause();
     else throw new NullPointerException("波形が読み込まれていません！最初にloadWave()を呼ぶ必要があります。");
   }
-  
+
   class ScoreFileSyntaxErrorException extends Exception {
     ScoreFileSyntaxErrorException(String msg) {
       super(msg);
     }
   }
-
 }

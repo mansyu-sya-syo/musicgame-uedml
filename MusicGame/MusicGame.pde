@@ -10,9 +10,10 @@ final double PERFECT_TIME=50.0;
 final double LOST_TIME=150.0;
 final int LANE_NUM=5;
 final int DIFFICULTY_NUM=2;
-final double TARGET_FPS=60.0;
-final double FRAME_TIME=1000.0/TARGET_FPS;
-final int MAX_NOTES=10000;
+
+//final double TARGET_FPS=60.0;
+//final double FRAME_TIME=1000.0/TARGET_FPS;
+//final int MAX_NOTES=10000;
 final int laneX[]={100, 260, 420, 580, 740, 900};
 
 //ノーツの種類
@@ -46,30 +47,7 @@ enum Judge{
   NA
 }
 
-//各行を画面に表示
-void showText(String[] lineData){
-  for ( int i = 0; i < lineData.length; i++ ) {
-    println( String.valueOf(i) + "：[" + lineData[i] + "]" );
-  }
-}
 
-
-
-//2つのテキストを文字通りくっつける錬金術
-//2つのテキストを順にそのまま繋げる
-
-String[] bindTwoFiles(String[] lineData1, String[] lineData2) {
-  //両方nullならnull
-  if(lineData1==null && lineData2==null) return null;
-  //いずれかがnullならば他方を返す
-  if(lineData1==null) return lineData2;
-  if(lineData2==null) return lineData1;
-  //コピーを駆使して合体させる
-  String lineData[]=new String[lineData1.length+lineData2.length];
-  System.arraycopy(lineData1, 0, lineData, 0, lineData1.length);
-  System.arraycopy(lineData2, 0, lineData, lineData1.length, lineData2.length);
-  return lineData;
-}
 
 
 //画面サイズの設定とシーンの設定
@@ -78,8 +56,13 @@ public void settings() {
   SceneManager.set("Title", new Title());
   SceneManager.set("MusicSelect", new MusicSelect());
   SceneManager.set("MusicInfo", new MusicInfo());
+  SceneManager.set("re", new ResultScene(new ScoreBoard(500)));
   SceneManager.changeScene("Title");
   Game.minim=new Minim(this);
+  int songNum=Game.fileName.length;
+  for (int i=0; i<songNum; i++) Game.fileName[i]+=Game.ext;
+  for (int i=0; i<songNum; i++) Game.fileName2[i]+=Game.ext;
+
 }
 
 @Override

@@ -4,7 +4,7 @@ class MusicInfo extends Scene {
   private int select=2;
 
   void setup(){
-    this.n=Game.nowSelecting;
+    this.n=Game.musicID;
   }
 
   void draw() {
@@ -57,35 +57,36 @@ class MusicInfo extends Scene {
   }
 
   void keyPressed() {
-    if (keyCode==LEFT&&select>=1) {
+    if (keyCode==Game.left&&select>=1) {
       select=0;
       Game.song1.play(0);
     }
-    if (keyCode==RIGHT&&select==0) {
+    if (keyCode==Game.right&&select==0) {
       select=1;
       Game.song1.play(0);
     }
-    if (keyCode==UP&&select==1) {
+    if (keyCode==Game.up&&select==1) {
       select=2;
       Game.song1.play(0);
     }
-    if (keyCode==DOWN&&select==2) {
+    if (keyCode==Game.down&&select==2) {
       select=1;
       Game.song1.play(0);
     }
-    if (keyCode==ENTER) {
+    if (keyCode==Game.enter) {
       if (select==0) {
         SceneManager.changeScene("MusicSelect"); //楽曲選択に戻る
         Game.song3.play(0);
       }
       if (select==1 || select==2) {
         try{
-          String[] score=bindTwoFiles(loadStrings("scores/"+Game.fileName[n]),loadStrings("scores/"+Game.fileName2[n]));
+          String[] score=GameUtil.bindTwoFiles(loadStrings("scores/"+Game.fileName[n]),loadStrings("scores/"+Game.fileName2[n]));
           //TODO 楽曲の停止処理
-          SceneManager.set("GameMain", new Music(score));
+          Music music=new Music(score);
+          SceneManager.set("GameMain", music);
           SceneManager.changeScene("GameMain"); //ゲームメインに移行
-          if(select==1) Game.difficulty=Difficulty.EASY;
-          else Game.difficulty=Difficulty.HARD;
+          if(select==1) music.setDifficulty(Difficulty.EASY);
+          else music.setDifficulty(Difficulty.HARD);
           Game.song2.play(0);
           
         }catch(Exception e){
