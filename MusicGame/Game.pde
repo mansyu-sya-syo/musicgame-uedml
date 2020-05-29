@@ -14,7 +14,7 @@ static class Game {
   static PImage[] jacket=new PImage[50];
   static String[] title={"A Beginer", "Boot UP!!", "hilarious AI", "ALICE IN GLITCHED WORLD", "Dáinsleif", "Hazard BULLΣT", "Pluge", "snow","fdhfdf","fjdskhfk"};
   static String[] fileName={"A Beginer", "Boot UP", "hilarious AI", "ALICE IN GLITCHED WORLD", "Dáinsleif", "Hazard BULLΣT", "Pluge", "snow","",""};
-  static String[] fileName2={"A Beginer", "Boot UP easy", "hilarious AI", "ALICE IN GLITCHED WORLD", "Dáinsleif", "Hazard BULLΣT", "Pluge", "snow","",""};
+  static String[] fileName2={"", "Boot UP easy", "hilarious AI", "ALICE IN GLITCHED WORLD", "Dáinsleif", "Hazard BULLΣT", "Pluge", "snow","",""};
   static String ext=".aof";
   static String[] jacketName={"A Beginer.jpg", "boot up.jpg", "hilarious.jpg", "ALICE.jpg", "Dainsleif.jpg", "Hazard.jpg", "Pluge.jpg", "snow.jpg", "yoaruki.jpg", "1.jpg"};
  

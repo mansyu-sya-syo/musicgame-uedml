@@ -1,4 +1,4 @@
-import java.util.ArrayList; //<>// //<>// //<>//
+import java.util.ArrayList;  //<>//
 import javafx.util.Pair;
 import ddf.minim.*;
 import ddf.minim.analysis.*;
@@ -54,6 +54,7 @@ class BackGrounds {
       EffectManager.add(new StringMsg("lost", (laneX[lane]+laneX[lane+1])/2, Game.laneY-30));
       scoreBoard.miss++;
     }
+
     return true;
   }
 
@@ -131,7 +132,7 @@ class Note {
 
   //ロストチェック
   boolean checkLost(double time) {
-    if (diff(pos,time)<-LOST_TIME && status==Status.DEFAULT) {
+    if (diff(pos, time)<-LOST_TIME && status==Status.DEFAULT) {
       status=Status.VANISHED;
       return true;
     }
@@ -139,8 +140,11 @@ class Note {
     return false;
   }
 
+  //画面から消えたかチェック(通常ノーツの場合はロストチェックと一致)
+
+
   //既定の時刻と現在の時刻の差を求める(正ならば現在時刻のほうが早い)
-  double diff(double t1,double t2) {
+  double diff(double t1, double t2) {
     return t1-t2-Game.OFFSET;
   }
 
@@ -155,19 +159,13 @@ class Note {
 
   //判定(押す)
   Judge judgePress(double time) {
-    double diff=diff(pos,time);
+    double diff=diff(pos, time);
 
     diff=abs((float)diff);
     if (diff>=LOST_TIME) return null; 
     //println(diff);
-    if (type==NoteType.NORMAL) {
-      status=Status.VANISHED;
-    } else if (type==NoteType.LONG) {
-      if (status==Status.DEFAULT) {
-        status=Status.PRESSED; 
-        return null;
-      }
-    }
+    if(type==NoteType.NORMAL) status=Status.VANISHED;
+
     return judge(diff);
   }
 
@@ -185,19 +183,27 @@ class Note {
 
   //こうしないとコンパイル通らないから煮え切らない実装になってるの・・・
   //あたしってほんとバカ・・・
-  double getEndPos() {
+  double getEndPos() { 
     return UNDEFINED;
   }
   void setEndPos(double endpos) {
   }
   void addCheckPoint(double pos) {
   }
+  boolean checkOffDisplay(double time) { 
+    return true;
+  }
+  Judge checkPoint(double time) { 
+    return null;
+  }
+  void release() {
+  }
 }
 
 class LongNote extends Note {
 
   private double endpos=UNDEFINED; //終端位置[sec](ロングのみ)
-  private ArrayList<Double> checkPoint; //チェックポイント(ロングノーツにおける中間判定)
+  private ArrayList<Double> checkPoint=new ArrayList<Double>(); //チェックポイント(ロングノーツにおける中間判定)
   private int checked=0; //チェックポイント通過数
 
   LongNote(double pos, int lane) {
@@ -213,15 +219,37 @@ class LongNote extends Note {
     rect(laneX[lane], Game.calcNoteY(endpos, time), 160, (Game.calcNoteY(pos, time)-Game.calcNoteY(endpos, time)));
   }
 
-  //ノーツロスト判定(ロングノーツはロストしない)
   @Override
-    boolean checkLost(double time) {
+    Judge judgePress(double time) {
+    double diff=diff(pos, time);
+
+    diff=abs((float)diff);
+    if (diff>=LOST_TIME) return null; 
+    //println(diff);
+    status=Status.PRESSED; 
+    return judge(diff);
+  }
+  //ノーツロスト判定はそのまま(ただし、ロングノーツはロストしない)
+
+  //画面から消えたかチェック
+  @Override
+    boolean checkOffDisplay(double time) {
+    if (diff(endpos, time)<-LOST_TIME) {
+      status=Status.VANISHED;
+      return true;
+    }
+
     return false;
+  }
+
+  @Override
+    void release() {
+    status=Status.DEFAULT;
   }
 
   //チェックポイントの追加
   @Override
-  void addCheckPoint(double pos) {
+    void addCheckPoint(double pos) {
     checkPoint.add(pos);
   }
 
@@ -234,9 +262,17 @@ class LongNote extends Note {
     void setEndPos(double endpos) {
     this.endpos=endpos;
   }
-  
-  //@Override
-  //boolean checkPoint(){}
+
+  @Override
+    Judge checkPoint(double time) {
+    if (checkPoint.size()<=checked) return null;
+    if (checkPoint.get(checked)<=time) {
+      checked++;
+      if (status==Status.PRESSED) return Judge.PERFECT;
+      if (status==Status.DEFAULT) return Judge.LOST;
+    }
+    return null;
+  }
 }
 
 
@@ -262,6 +298,7 @@ class Music extends Scene {
   int[] level=new int[DIFFICULTY_NUM];
   private ArrayList<Note>[][] lanes=new ArrayList[2][5];
   private int noteCnt[]={0, 0, 0, 0, 0};
+  private int showCnt[]={0, 0, 0, 0, 0};
 
   private double startTime;
   private double time;
@@ -310,6 +347,7 @@ class Music extends Scene {
         Game.keyState[i]=false;
         backGrounds.recent[i]=Judge.NA;
       }
+      checkReleased(i);
     }
   }
 
@@ -319,6 +357,7 @@ class Music extends Scene {
     Game.setSpeed(d);
     //println(noteCnt.length);
     for (int i=0; i<LANE_NUM; i++) noteCnt[i]=0;
+    for (int i=0; i<LANE_NUM; i++) showCnt[i]=0;
   }
 
   //ノーツロスト判定
@@ -329,6 +368,16 @@ class Music extends Scene {
       if (note.checkLost(time) ) {
         backGrounds.judge(i, Judge.LOST); //BackGroundsにロストしたことを通知
         noteCnt[i]++; //ロストしてたらカウント一個あげる
+        if (note.getType()==NoteType.NORMAL) showCnt[i]++;
+      }
+    }
+    for (int i=0; i<LANE_NUM; i++) {
+      if (showCnt[i]>=lanes[d][i].size()) continue; //すでにレーンの全ノーツが消えているならば飛ばす
+      Note note=lanes[d][i].get(showCnt[i]); //一番手前のノーツ
+      if (note.getType()==NoteType.LONG && note.checkOffDisplay(time) ) {
+        showCnt[i]++; //画面から消えたか
+      } else if (note.getType()==NoteType.LONG) {
+        backGrounds.judge(i, note.checkPoint(time));
       }
     }
   }
@@ -339,15 +388,24 @@ class Music extends Scene {
   void judge(int lane) {
     if (noteCnt[lane]>=lanes[d][lane].size()) return; //すでにレーンの全ノーツが消えているならば飛ばす
     Note note=lanes[d][lane].get(noteCnt[lane]);
-    if (backGrounds.judge(lane, note.judgePress(time))) noteCnt[lane]++;
+    if (backGrounds.judge(lane, note.judgePress(time))) {
+      noteCnt[lane]++;
+      if (note.getType()==NoteType.NORMAL) showCnt[lane]++;
+    }
   }
 
+  //(引数：レーンNo.0~4)
+  void checkReleased(int lane) {
+    if (noteCnt[lane]>=lanes[d][lane].size()) return; //すでにレーンの全ノーツが消えているならば飛ばす
+    Note note=lanes[d][lane].get(noteCnt[lane]);
+    note.release();
+  }
 
 
   //ノーツの描画
   void drawNotes() {
     for (int i=0; i<LANE_NUM; i++) {
-      for (int j=noteCnt[i]; j<lanes[d][i].size(); j++) {
+      for (int j=showCnt[i]; j<lanes[d][i].size(); j++) {
         Note note=lanes[d][i].get(j);
         if (Game.calcNoteY(note.getPos(), time)<-100) break;
         note.draw(time);
@@ -461,15 +519,16 @@ class Music extends Scene {
             if (size==0 || (before=lanes[d][notenum].get(size-1)).getEndPos()!=Note.UNDEFINED || before.getType()==NoteType.NORMAL) {
               lanes[d][notenum].add(new LongNote(time, notenum));
               allNotes[d]++;
-            } else if(size!=0 && before.getEndPos()==Note.UNDEFINED && before.getType()==NoteType.LONG){
-              //before.addCheckPoint(time);
+            } else if (size!=0 && (before=lanes[d][notenum].get(size-1)).getEndPos()==Note.UNDEFINED && before.getType()==NoteType.LONG) {
+              print("☆");
+              before.addCheckPoint(time);
               allNotes[d]++;
             }
             notenum++;
           } else if (num==3) {
             //ロングノーツの終端
-            if (size==0) throw new ScoreFileSyntaxErrorException("ロングノーツの終点に対応する始点がありません。");
-            Note before=lanes[d][notenum].get(size-1); //一個前のノーツ
+            Note before;
+            if (size==0 || (before=lanes[d][notenum].get(size-1)).getType()==NoteType.NORMAL) throw new ScoreFileSyntaxErrorException("ロングノーツの終点に対応する始点がありません。");
             before.setEndPos(time);
             notenum++;
           } else if (num==0) {
@@ -554,7 +613,8 @@ class Music extends Scene {
         commandName="";
         argument="";
       } else if (status==0 || status==3) {
-        println("OK: i="+String.valueOf(i)+" line="+lines[i]);
+        //if(d==0) throw new ScoreFileSyntaxErrorException(""); 
+        //println("OK: i="+String.valueOf(i)+" size="+lanes[1][0].size());
         //println("OK: difficulty="+String.valueOf(d));
         double bpn=4.0/unit; //1ノーツ当たりの拍数 [beats/notes]
         double bps=BPM/60/1000; //1msec当たりの拍数　[beats/msec]

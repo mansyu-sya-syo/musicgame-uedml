@@ -38,7 +38,7 @@ class ResultScene extends Scene {
     textSize(100);
     textAlign(RIGHT);
     //text(Integer.toString((int)GameUtil.countUpByTime(time, 10000, 59, 2)), 800, 190);
-    text(Integer.toString((int)GameUtil.countUpByTime(time,scoreBoard.calcScore(),59,2)), 400, 190);
+    text(Integer.toString((int)GameUtil.countUpByTime(time,scoreBoard.calcScore(),59,2)), 800, 190);
     textSize(30);
     fill(0, (float)GameUtil.colorByTime(time, 200)*255);
     text("press Enter key", 700, 550);
