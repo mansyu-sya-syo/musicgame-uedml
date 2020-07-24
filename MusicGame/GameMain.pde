@@ -474,8 +474,6 @@ class Music extends Scene {
         char current=lines[i].charAt(j);
         int num=current - '0';
         
-        if(current==' ') continue;
-        
         //コメント
         if (current=='/') {
           if (j+1!=lines[i].length()) {
@@ -503,7 +501,8 @@ class Music extends Scene {
         
         //5文字を超えているとき
         if(notenum>=LANE_NUM  && (status==0 || status==3)){
-          throw new ScoreFileSyntaxErrorException(i,"1行にレーンの総数を超えるノーツは記述できません。");
+          if(current==' ') continue;
+          else throw new ScoreFileSyntaxErrorException(i,"1行にレーンの総数を超えるノーツは記述できません。");
         }
         
         
@@ -529,7 +528,7 @@ class Music extends Scene {
               lanes[d][notenum].add(new LongNote(time, notenum));
               allNotes[d]++;
             } else if (size!=0 && (before=lanes[d][notenum].get(size-1)).getEndPos()==Note.UNDEFINED && before.getType()==NoteType.LONG) {
-              print("☆");
+              //print("☆");
               before.addCheckPoint(time);
               allNotes[d]++;
             }
