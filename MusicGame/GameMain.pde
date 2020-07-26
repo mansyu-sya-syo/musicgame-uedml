@@ -614,6 +614,9 @@ class Music extends Scene {
           unit=Double.parseDouble(argument);
 
           break;
+        case "#DELAY":
+          time+=Double.parseDouble(argument);
+          break;
         case "#MEASURE":
           beats=frac(argument);
           break;

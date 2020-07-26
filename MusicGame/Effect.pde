@@ -1,4 +1,5 @@
 import java.util.LinkedList;
+import java.util.Iterator;
 
 abstract class Effect{
   abstract void draw(); //描画
@@ -8,6 +9,7 @@ abstract class Effect{
 static class EffectManager{
   private static LinkedList<Effect> list= new LinkedList<Effect>();
   private static int prevTime=0;
+  private static Iterator<Effect> iter=list.iterator();
   
   static void add(Effect e){
     list.add(e);
@@ -16,10 +18,11 @@ static class EffectManager{
   static void draw(int millis){
     int diff=millis-prevTime;
     prevTime=millis;
-    for(int i=0;i<list.size();i++){
-      Effect e=list.get(i);
+    //寿命の尽きたエフェクトを削除
+    while(iter.hasNext()){
+      Effect e=(Effect)iter.next();
       if((e.lifeTime-=diff)>0) e.draw();
-      else list.remove(i);
+      else iter.remove();
     }
   }
     

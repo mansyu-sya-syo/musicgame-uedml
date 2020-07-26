@@ -11,6 +11,8 @@ static class Game {
   static int musicID=0;
   static boolean[] keyState=new boolean[5];
   //screen change
+  static String settingsPath="csv/settings.csv";
+  static String scoreListPath="csv/scorelist.csv";
   static PImage[] jacket=new PImage[50];
   static String[] title={"A Beginer", "Boot UP!!", "hilarious AI", "ALICE IN GLITCHED WORLD", "Dáinsleif", "Hazard BULLΣT", "Pluge", "snow","fdhfdf","fjdskhfk"};
   static String[] fileName={"CR", "Boot UP", "hilarious AI", "ALICE IN GLITCHED WORLD", "Dáinsleif", "Hazard BULLΣT", "Pluge", "snow","",""};
@@ -36,10 +38,10 @@ static class Game {
     return (int)((-t1+t2)/speed+laneY+SHOWOFFSET);
   }
   
-  static final double SPEED_EASY=1.5;
-  static final double SPEED_HARD=1;
-  static final double SHOWOFFSET=100;
-  static final double OFFSET=100;
+  static double SPEED_EASY=1.5;
+  static double SPEED_HARD=1;
+  static double SHOWOFFSET=100;
+  static double OFFSET=100;
   
   static private double speed;
   

@@ -53,11 +53,12 @@ enum Judge{
 //画面サイズの設定とシーンの設定
 public void settings() {
   size(1000, 600);
+  SceneManager.set("Init",new Init());
   SceneManager.set("Title", new Title());
   SceneManager.set("MusicSelect", new MusicSelect());
   SceneManager.set("MusicInfo", new MusicInfo());
   SceneManager.set("re", new ResultScene(new ScoreBoard(500)));
-  SceneManager.changeScene("Title");
+  SceneManager.changeScene("Init");
   Game.minim=new Minim(this);
   int songNum=Game.fileName.length;
   for (int i=0; i<songNum; i++) Game.fileName[i]+=Game.ext;
@@ -84,7 +85,7 @@ public void settings() {
 
   if (frameCount == 0) {
     SceneManager.getCurrentScene().setup();
-    SceneManager.incrementFrameCount(); //setup()がなぜか２回呼ばれてしまうので挿入
+    //SceneManager.incrementFrameCount(); //setup()がなぜか２回呼ばれてしまうので挿入
   } else {
     double rate = 1000000.0 / ((now - frameRateLastNanos) / 1000000.0);
     float instantaneousRate = (float) (rate / 1000.0);
